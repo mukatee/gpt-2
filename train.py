@@ -35,6 +35,7 @@ parser.add_argument('--memory_saving_gradients', default=False, action='store_tr
 parser.add_argument('--only_train_transformer_layers', default=False, action='store_true', help='Restrict training to the transformer blocks.')
 parser.add_argument('--optimizer', type=str, default='adam', help='Optimizer. <adam|sgd>.')
 parser.add_argument('--noise', type=float, default=0.0, help='Add noise to input training data to regularize against typos.')
+parser.add_argument('--quiet', type=int, default=1, help='Print loss only every N rounds.')
 
 parser.add_argument('--top_k', type=int, default=40, help='K for top-k sampling.')
 parser.add_argument('--top_p', type=float, default=0.0, help='P for top-p sampling. Overrides top_k if set > 0.')
@@ -72,6 +73,7 @@ def main():
     args = parser.parse_args()
     enc = encoder.get_encoder(args.model_name)
     hparams = model.default_hparams()
+    quiet = args.quiet
     with open(os.path.join('models', args.model_name, 'hparams.json')) as f:
         hparams.override_from_dict(json.load(f))
 
@@ -275,13 +277,14 @@ def main():
                 avg_loss = (avg_loss[0] * 0.99 + v_loss,
                             avg_loss[1] * 0.99 + 1.0)
 
-                print(
-                    '[{counter} | {time:2.2f}] loss={loss:2.2f} avg={avg:2.2f}'
-                    .format(
-                        counter=counter,
-                        time=time.time() - start_time,
-                        loss=v_loss,
-                        avg=avg_loss[0] / avg_loss[1]))
+                if counter % quiet == 0:
+                    print(
+                        '[{counter} | {time:2.2f}] loss={loss:2.2f} avg={avg:2.2f}'
+                        .format(
+                            counter=counter,
+                            time=time.time() - start_time,
+                            loss=v_loss,
+                            avg=avg_loss[0] / avg_loss[1]))
 
                 counter += 1
         except KeyboardInterrupt:
