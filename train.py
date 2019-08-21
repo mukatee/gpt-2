@@ -46,6 +46,8 @@ parser.add_argument('--sample_every', metavar='N', type=int, default=100, help='
 parser.add_argument('--sample_length', metavar='TOKENS', type=int, default=1023, help='Sample this many tokens')
 parser.add_argument('--sample_num', metavar='N', type=int, default=1, help='Generate this many samples')
 parser.add_argument('--save_every', metavar='N', type=int, default=1000, help='Write a checkpoint every N steps')
+parser.add_argument('--max_time', metavar='N', type=int, default=0, help='End after this many seconds if defined.')
+parser.add_argument('--max_passes', metavar='N', type=int, default=0, help='End after this many data items processed.')
 
 parser.add_argument('--val_dataset', metavar='PATH', type=str, default=None, help='Dataset for validation loss, defaults to --dataset.')
 parser.add_argument('--val_batch_size', metavar='SIZE', type=int, default=2, help='Batch size for validation.')
@@ -74,6 +76,8 @@ def main():
     enc = encoder.get_encoder(args.model_name)
     hparams = model.default_hparams()
     quiet = args.quiet
+    max_time = args.max_time
+    max_passes = args.max_passes
     with open(os.path.join('models', args.model_name, 'hparams.json')) as f:
         hparams.override_from_dict(json.load(f))
 
@@ -277,16 +281,24 @@ def main():
                 avg_loss = (avg_loss[0] * 0.99 + v_loss,
                             avg_loss[1] * 0.99 + 1.0)
 
-                if counter % quiet == 0:
+                time_spent = time.time() - start_time
+                if counter == 1 or counter % quiet == 0:
                     print(
                         '[{counter} | {time:2.2f}] loss={loss:2.2f} avg={avg:2.2f}'
                         .format(
                             counter=counter,
-                            time=time.time() - start_time,
+                            time=time_spent,
                             loss=v_loss,
                             avg=avg_loss[0] / avg_loss[1]))
 
                 counter += 1
+                if time_spent > max_time:
+                    save()
+                    break
+                passes = 1024 * args.batch_size
+                if passes > max_passes:
+                    save()
+                    break
         except KeyboardInterrupt:
             print('interrupted')
             save()
