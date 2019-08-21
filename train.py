@@ -153,6 +153,7 @@ def main():
 
         summary_log = tf.summary.FileWriter(
             os.path.join(CHECKPOINT_DIR, args.run_name))
+        summary_csv = "counter,avg_loss,loss"
 
         saver = tf.train.Saver(
             var_list=all_vars,
@@ -210,6 +211,9 @@ def main():
                 global_step=counter)
             with open(counter_path, 'w') as fp:
                 fp.write(str(counter) + '\n')
+            summary_csv_path = f"{CHECKPOINT_DIR}/summary_{counter}.csv"
+            with open(summary_csv_path, "w") as f:
+                f.write(summary_csv)
 
         def generate_samples():
             print('Generating samples...')
@@ -286,6 +290,7 @@ def main():
 
                 avg_loss = (avg_loss[0] * 0.99 + v_loss,
                             avg_loss[1] * 0.99 + 1.0)
+                summary_csv += f"\n{counter},{avg_loss[0] / avg_loss[1]},{v_loss}"
 
                 time_spent = time.time() - start_time
 
