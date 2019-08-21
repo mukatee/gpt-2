@@ -77,7 +77,7 @@ def main():
     hparams = model.default_hparams()
     quiet = args.quiet
     max_time = args.max_time
-    max_passes = args.max_passes
+    max_batches = args.max_passes
     with open(os.path.join('models', args.model_name, 'hparams.json')) as f:
         hparams.override_from_dict(json.load(f))
 
@@ -257,10 +257,10 @@ def main():
         start_time = time.time()
 
         try:
-            if max_passes > 0:
-                pbar = tqdm.tqdm(total=max_passes/args.batch_size)
-#            elif max_time > 0:
-#                pbar = tqdm.tqdm(total=max_time)
+            if max_batches > 0:
+                pbar = tqdm.tqdm(total=max_batches/args.batch_size)
+            elif max_time > 0:
+                pbar = tqdm.tqdm(total=max_time)
             else:
                 pbar = tqdm.tqdm()
             while True:
@@ -293,9 +293,9 @@ def main():
                 if max_time > 0 and time_spent > max_time:
                     print(f"ending due to time limit: {time_spent} > {max_time}")
                     ending = True
-                passes = counter * args.batch_size
-                if max_passes > 0 and passes > max_passes:
-                    print(f"ending due to max passes: {passes} > {max_passes}")
+                batches = counter * args.batch_size
+                if max_batches > 0 and batches > max_batches:
+                    print(f"ending due to max batches: {batches} > {max_batches}")
                     ending = True
 
                 if counter == 1 or counter % quiet == 0 or ending:
@@ -308,7 +308,10 @@ def main():
                             avg=avg_loss[0] / avg_loss[1]))
 
                 counter += 1
-                pbar.update(1)
+                if max_batches > 0 or max_time == 0:
+                    pbar.update(1)
+                else:
+                    pbar.update(time_spent - pbar.n)
                 if ending:
                     save()
                     break
