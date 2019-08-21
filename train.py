@@ -282,7 +282,17 @@ def main():
                             avg_loss[1] * 0.99 + 1.0)
 
                 time_spent = time.time() - start_time
-                if counter == 1 or counter % quiet == 0:
+
+                ending = False
+                if time_spent > max_time:
+                    print(f"ending due to time limit: {time_spent} > {max_time}")
+                    ending = True
+                passes = counter * args.batch_size
+                if passes > max_passes:
+                    print(f"ending due to max passes: {passes} > {max_passes}")
+                    ending = True
+
+                if counter == 1 or counter % quiet == 0 or ending:
                     print(
                         '[{counter} | {time:2.2f}] loss={loss:2.2f} avg={avg:2.2f}'
                         .format(
@@ -292,11 +302,7 @@ def main():
                             avg=avg_loss[0] / avg_loss[1]))
 
                 counter += 1
-                if time_spent > max_time:
-                    save()
-                    break
-                passes = counter * args.batch_size
-                if passes > max_passes:
+                if ending:
                     save()
                     break
         except KeyboardInterrupt:
