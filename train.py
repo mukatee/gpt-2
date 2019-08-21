@@ -295,7 +295,7 @@ def main():
                 if time_spent > max_time:
                     save()
                     break
-                passes = 1024 * args.batch_size
+                passes = counter * args.batch_size
                 if passes > max_passes:
                     save()
                     break
