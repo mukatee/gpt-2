@@ -257,6 +257,12 @@ def main():
         start_time = time.time()
 
         try:
+            if max_passes > 0:
+                pbar = tqdm.tqdm(total=max_passes/args.batch_size)
+#            elif max_time > 0:
+#                pbar = tqdm.tqdm(total=max_time)
+            else:
+                pbar = tqdm.tqdm()
             while True:
                 if counter % args.save_every == 0:
                     save()
@@ -302,6 +308,7 @@ def main():
                             avg=avg_loss[0] / avg_loss[1]))
 
                 counter += 1
+                pbar.update(1)
                 if ending:
                     save()
                     break
