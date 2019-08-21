@@ -284,11 +284,11 @@ def main():
                 time_spent = time.time() - start_time
 
                 ending = False
-                if time_spent > max_time:
+                if max_time > 0 and time_spent > max_time:
                     print(f"ending due to time limit: {time_spent} > {max_time}")
                     ending = True
                 passes = counter * args.batch_size
-                if passes > max_passes:
+                if max_passes > 0 and passes > max_passes:
                     print(f"ending due to max passes: {passes} > {max_passes}")
                     ending = True
 
