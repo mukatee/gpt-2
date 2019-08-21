@@ -47,7 +47,7 @@ parser.add_argument('--sample_length', metavar='TOKENS', type=int, default=1023,
 parser.add_argument('--sample_num', metavar='N', type=int, default=1, help='Generate this many samples')
 parser.add_argument('--save_every', metavar='N', type=int, default=1000, help='Write a checkpoint every N steps')
 parser.add_argument('--max_time', metavar='N', type=int, default=0, help='End after this many seconds if defined.')
-parser.add_argument('--max_passes', metavar='N', type=int, default=0, help='End after this many data items processed.')
+parser.add_argument('--max_batches', metavar='N', type=int, default=0, help='End after this many batches processed.')
 
 parser.add_argument('--val_dataset', metavar='PATH', type=str, default=None, help='Dataset for validation loss, defaults to --dataset.')
 parser.add_argument('--val_batch_size', metavar='SIZE', type=int, default=2, help='Batch size for validation.')
@@ -77,7 +77,7 @@ def main():
     hparams = model.default_hparams()
     quiet = args.quiet
     max_time = args.max_time
-    max_batches = args.max_passes
+    max_batches = args.max_batches
     with open(os.path.join('models', args.model_name, 'hparams.json')) as f:
         hparams.override_from_dict(json.load(f))
 
