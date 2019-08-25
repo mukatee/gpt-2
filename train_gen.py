@@ -54,6 +54,8 @@ parser.add_argument('--val_batch_size', metavar='SIZE', type=int, default=2, hel
 parser.add_argument('--val_batch_count', metavar='N', type=int, default=40, help='Number of batches for validation.')
 parser.add_argument('--val_every', metavar='STEPS', type=int, default=0, help='Calculate validation loss every STEPS steps.')
 
+parser.add_argument('--generate_from', metavar='N', type=str, default=None, help='Run generation from this seed text.')
+
 
 def maketree(path):
     try:
@@ -70,6 +72,29 @@ def randomize(context, hparams, p):
     else:
         return context
 
+def generate_samples(data_sampler, generate_from, args, sess, tf_sample, context, enc, counter):
+    print('Generating samples...')
+    context_tokens = data_sampler.sample(1)
+    if generate_from is not None:
+        context_tokens = enc.encode(generate_from)
+    all_text = []
+    index = 0
+    while index < args.sample_num:
+        out = sess.run(
+            tf_sample,
+            feed_dict={context: args.batch_size * [context_tokens]})
+        for i in range(min(args.sample_num - index, args.batch_size)):
+            text = enc.decode(out[i])
+            text = '======== SAMPLE {} ========\n{}\n'.format(
+                index + 1, text)
+            all_text.append(text)
+            index += 1
+    print(text)
+    maketree(os.path.join(SAMPLE_DIR, args.run_name))
+    with open(
+            os.path.join(SAMPLE_DIR, args.run_name,
+                         'samples-{}').format(counter), 'w') as fp:
+        fp.write('\n'.join(all_text))
 
 def main():
     args = parser.parse_args()
@@ -78,6 +103,7 @@ def main():
     quiet = args.quiet
     max_time = args.max_time
     max_batches = args.max_batches
+    generate_from = args.generate_from
     with open(os.path.join('models', args.model_name, 'hparams.json')) as f:
         hparams.override_from_dict(json.load(f))
 
@@ -93,7 +119,18 @@ def main():
     config = tf.ConfigProto()
     config.gpu_options.allow_growth = True
     config.graph_options.rewrite_options.layout_optimizer = rewriter_config_pb2.RewriterConfig.OFF
+
     with tf.Session(config=config) as sess:
+        data_sampler, generate_from, args, sess, tf_sample, context, enc, counter = run(sess, args, hparams, enc, generate_from, max_batches, max_time, quiet)
+        while True:
+            generate_from = input("prompt")
+            generate_samples(data_sampler, generate_from, args, sess, tf_sample, context, enc, counter)
+
+
+def run(sess, args, hparams, enc, generate_from, max_batches, max_time, quiet):
+
+    if True:
+#    with tf.Session(config=config) as sess:
         context = tf.placeholder(tf.int32, [args.batch_size, None])
         context_in = randomize(context, hparams, args.noise)
         output = model.model(hparams=hparams, X=context_in)
@@ -218,6 +255,8 @@ def main():
         def generate_samples():
             print('Generating samples...')
             context_tokens = data_sampler.sample(1)
+            if generate_from is not None:
+                context_tokens = enc.encode(generate_from)
             all_text = []
             index = 0
             while index < args.sample_num:
@@ -268,9 +307,12 @@ def main():
             else:
                 pbar = tqdm.tqdm()
             while True:
+                if counter > 1:
+                    generate_samples()
+                    return data_sampler, generate_from, args, sess, tf_sample, context, enc, counter
                 if counter % args.save_every == 0:
                     save()
-                if counter % args.sample_every == 0:
+                if counter % args.sample_every == 0 or True:
                     generate_samples()
                 if args.val_every > 0 and (counter % args.val_every == 0 or counter == 1):
                     validation()
