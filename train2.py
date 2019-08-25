@@ -63,6 +63,8 @@ def generate_samples(data_sampler, generate_from, args, sess, tf_sample, context
 class Object(object):
     pass
 
+print("initializing train2")
+
 args = Object()
 args.model_name = "117M"
 args.restore_from = "../talkingdonkeys/layers/gpt2-models/lyrics"
@@ -221,20 +223,9 @@ def bootstrap(sess, args, hparams, enc, generate_from):
 
 data_sampler, generate_from, args, sess, tf_sample, context, enc, counter = bootstrap(sess, args, hparams, enc, generate_from)
 
-def generate_sample():
+def generate_sample(generate_from=generate_from):
     return generate_samples(data_sampler, generate_from, args, sess, tf_sample, context, enc, counter)
 
-
-from flask import Flask, request, jsonify
-
-app = Flask(__name__)
-
-@app.route('/api/generate_text/', methods = ['POST'])
-def generate_text():
-    content = request.json
-    seed_text = content['seed_text']
-    generated_text = generate_samples(data_sampler, seed_text, args, sess, tf_sample, context, enc, counter)
-    return jsonify({"generated_text": generated_text})
 
 if __name__ == '__main__':
     print()
@@ -243,4 +234,3 @@ if __name__ == '__main__':
     print()
     print("sample2 from main:")
     generate_sample()
-    app.run(host= '0.0.0.0',debug=True, port=5566)
