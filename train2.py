@@ -57,13 +57,15 @@ def generate_samples(data_sampler, generate_from, args, sess, tf_sample, context
             os.path.join(SAMPLE_DIR, args.run_name,
                          'samples-{}').format(counter), 'w') as fp:
         fp.write('\n'.join(all_text))
+    return all_text
+
 
 class Object(object):
     pass
 
 args = Object()
 args.model_name = "117M"
-args.restore_from = "../talkingdonkeys/gpt2-models/lyrics"
+args.restore_from = "../talkingdonkeys/layers/gpt2-models/lyrics"
 args.optimizer = "adam"
 args.batch_size = 1
 args.noise = 0.0
@@ -222,6 +224,18 @@ data_sampler, generate_from, args, sess, tf_sample, context, enc, counter = boot
 def generate_sample():
     return generate_samples(data_sampler, generate_from, args, sess, tf_sample, context, enc, counter)
 
+
+from flask import Flask, request, jsonify
+
+app = Flask(__name__)
+
+@app.route('/api/generate_text/', methods = ['POST'])
+def generate_text():
+    content = request.json
+    seed_text = content['seed_text']
+    generated_text = generate_samples(data_sampler, seed_text, args, sess, tf_sample, context, enc, counter)
+    return jsonify({"generated_text": generated_text})
+
 if __name__ == '__main__':
     print()
     print("sample1 from main:")
@@ -229,3 +243,4 @@ if __name__ == '__main__':
     print()
     print("sample2 from main:")
     generate_sample()
+    app.run(host= '0.0.0.0',debug=True, port=5566)
