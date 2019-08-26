@@ -49,6 +49,8 @@ def generate_samples(data_sampler, generate_from, args, sess, tf_sample, context
             text = enc.decode(out[i])
             text = '======== SAMPLE {} ========\n{}\n'.format(
                 index + 1, text)
+            #28 is the SAMPLE.. header
+            text = text[28+len(generate_from):]
             all_text.append(text)
             index += 1
     print(text)
@@ -57,7 +59,7 @@ def generate_samples(data_sampler, generate_from, args, sess, tf_sample, context
             os.path.join(SAMPLE_DIR, args.run_name,
                          'samples-{}').format(counter), 'w') as fp:
         fp.write('\n'.join(all_text))
-    return all_text
+    return all_text[0]
 
 
 class Object(object):

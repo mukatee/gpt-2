@@ -17,9 +17,10 @@ def generate_text():
     return jsonify({"generated_text": generated_text})
 
 def aws_tweet(user, generated_text):
-    lb = boto3.client("lambda")
+    generated_text = generated_text.replace("\\n", "\n")
+    lb = boto3.client("lambda", region_name = 'eu-central-1')
     arn = 'arn:aws:lambda:eu-central-1:399551198609:function:LyricTweeter'
-    param_data = {"user": user, "lyric": generated_text}
+    param_data = {"user": str(user), "lyric": str(generated_text)}
     lb.invoke(FunctionName = arn, InvocationType = 'Event', Payload = bytes(json.dumps(param_data), encoding = "utf8"))
 
 
